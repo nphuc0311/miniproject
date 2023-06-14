@@ -50,6 +50,8 @@ void app_main()
 
     esp_netif_create_default_wifi_sta();
 
+
+    DHT11_init(DHT_GPIO);
     wifi_init_start();
     mqtt_init_start(&mqtt_h);
 

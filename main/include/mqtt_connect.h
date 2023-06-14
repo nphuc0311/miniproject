@@ -11,9 +11,10 @@
 #define MAX_LENGTH_TOPIC 30
 #define MAX_LENGTH_DATA 10
 
-#define TEMP_TOPIC_PUB 		    "dht/temp"
-#define HUMIDITY_TOPIC_PUB      "dht/humidity"
-#define STATUS_TOPIC_PUB        "dht/status"
+// #define TEMP_TOPIC_PUB 		    "dht/temp"
+// #define HUMIDITY_TOPIC_PUB      "dht/humidity"
+// #define STATUS_TOPIC_PUB        "dht/status"
+#define TOPIC_PUB               "dht/data"
 
 
 /**

@@ -12,8 +12,8 @@
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
 
-#define WIFI_SSID "An An"
-#define WIFI_PASS "happyhouse"
+#define WIFI_SSID "Zer0Max"
+#define WIFI_PASS "t1vodich"
 
 void event_handler(void* , esp_event_base_t , int32_t , void* );
 void wifi_init_start(void);

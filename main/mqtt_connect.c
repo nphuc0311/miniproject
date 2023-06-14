@@ -4,6 +4,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "cJSON.h"
 
 #include "esp_log.h"
 
@@ -18,11 +19,13 @@
 
 static const char *TAG = "mqtt connection";
 
-char temp_value[20];
-char humidity_value[20];
+// char temp_value[20];
+// char humidity_value[20];
+// char status[1];
 
 
 extern MQTT_Handler_Struct mqtt_h;
+MQTT_Handler_Struct *mqtt_t;
 
 void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -32,19 +35,34 @@ void log_error_if_nonzero(const char *message, int error_code)
     }
 }
 
-void pub_data_clk(MQTT_Handler_Struct *mqtt_t)
+void pub_data_clk(void* param)
 {
+    // cJSON *root;
+    // root = cJSON_CreateObject();
+    // double temperature;
+    // double humidity;
     while (1)
     {
-        if (DHT11_read().status != DHT11_OK)
-            mqtt_client_publish(mqtt_t, STATUS_TOPIC_PUB, "ERROR");
+        if (DHT11_read().status != DHT11_OK) {
+            cJSON *root;
+            root = cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "temperature", -1);
+            cJSON_AddNumberToObject(root, "temperature", -1);
+            cJSON_AddNumberToObject(root, "error", 1);
+            char *rendered=cJSON_Print(root);
+
+            mqtt_client_publish(mqtt_t, TOPIC_PUB, rendered);
+
+        }
         else {
-            double temperature = DHT11_read().temperature;
-            sprintf(temp_value, "%.1lf", temperature);
-            double humidity = DHT11_read().humidity;
-            sprintf(humidity_value, "%.1lf", humidity);
-            mqtt_client_publish(mqtt_t, TEMP_TOPIC_PUB, temp_value);
-            mqtt_client_publish(mqtt_t, HUMIDITY_TOPIC_PUB, humidity_value);
+            cJSON *root;
+            root = cJSON_CreateObject();
+            cJSON_AddNumberToObject(root, "temperature", DHT11_read().temperature);
+            cJSON_AddNumberToObject(root, "temperature", DHT11_read().humidity);
+            cJSON_AddNumberToObject(root, "error", 0);
+            char *rendered=cJSON_Print(root);
+
+            mqtt_client_publish(mqtt_t, TOPIC_PUB, rendered);
         }
         vTaskDelay(5*1000/portTICK_PERIOD_MS);
     }
@@ -53,15 +71,14 @@ void pub_data_clk(MQTT_Handler_Struct *mqtt_t)
 
 void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    MQTT_Handler_Struct *mqtt_t = (MQTT_Handler_Struct *)handler_args;
+    mqtt_t = (MQTT_Handler_Struct *)handler_args;
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%ld", base, event_id);
     esp_mqtt_event_handle_t event = event_data;
     // esp_mqtt_client_handle_t client = event->client;
     switch ((esp_mqtt_event_id_t)event_id)
     {
     case MQTT_EVENT_CONNECTED:
-        DHT11_init(DHT_GPIO);
-        pub_data_clk(mqtt_t);
+        xTaskCreate(&pub_data_clk, "DHT_task", 8192, NULL, 5, NULL);
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
